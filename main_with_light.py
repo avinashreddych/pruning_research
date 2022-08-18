@@ -9,7 +9,7 @@ import torch
 import torchmetrics
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-df = pd.read_csv("../raw_data/IMDB Dataset.csv")
+df = pd.read_csv("IMDB Dataset.csv")
 
 
 checkpoint_callback = ModelCheckpoint(dirpath="./saved_models")
