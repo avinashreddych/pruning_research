@@ -1,11 +1,12 @@
 # %%
+import torch
 import pandas as pd
 from model import ClassificationModel
 from dataset import IMDBDataset
 from torch.utils.data import DataLoader
-import pytorch_lightning as pl
 import torch.nn.functional as F
-import torch
+from torchmetrics import Accuracy
+
 
 df = pd.read_csv("../raw_data/IMDB Dataset.csv")
 
@@ -25,49 +26,47 @@ test_dataloader = DataLoader(dataset=test_dataset, batch_size=5, shuffle=True)
 
 nn = ClassificationModel()
 
+optimizer = torch.optim.Adam(nn.parameters(), lr=0.001)
 
-# %%
+accuracy = Accuracy()
 
 
-class ClassifierLight(pl.LightningModule):
-    def __init__(self, model):
-        super().__init__()
-        self.model = model
-
-    def training_step(self, batch, batch_index):
+def training_loop():
+    for i, batch in enumerate(train_dataloader):
+        if i == 4:
+            break
+        optimizer.zero_grad()
         x, y = batch
-        y_hat = self.model(x)
-        y_hat.squeeze_()
-        loss = F.cross_entropy(y_hat, y.float())
-        self.log(
-            "train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True
+        y = y.to(torch.float)
+        y_hat = nn(x)
+        loss = F.binary_cross_entropy(y_hat.flatter(), y)
+        print(
+            i,
+            loss,
         )
-        return loss
 
-    def validation_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self.model(x)
-        y_hat.squeeze_()
-        loss = F.cross_entropy(y_hat, y.float())
-        self.log("val_loss", loss)
+        loss.backward()
+        optimizer.step()
 
-    def test_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self.model(x)
-        y_hat.squeeze_()
-        loss = F.cross_entropy(y_hat, y.float())
-        self.log("test_loss", loss)
 
-    def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.02)
-
+# torch.save(nn.state_dict(), "imdb_classifier.pt")
 
 # %%
+def test_loop():
+    total_accuracy = 0
+    for i, batch in enumerate(train_dataloader):
+        x, y = batch
+        y_hat = nn(x)
+        acc = accuracy(y_hat, y)
+        print(acc)
+        total_accuracy = acc * 5
 
-model = ClassifierLight(nn)
+    print(total_accuracy / len(train_dataset))
 
-trainer = pl.Trainer(max_epochs=2)
 
-# %%
-trainer.fit(model, train_dataloader)
+# to reload the model
+
+# model = ClassificationModel()
+# model.load_state_dict(torch.load("imdb_classifier.pt"))
+
 # %%

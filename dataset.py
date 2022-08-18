@@ -1,5 +1,8 @@
+# %%
 import pandas as pd
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
+
+# %%
 
 
 def clean(input_df: pd.DataFrame) -> pd.DataFrame:
@@ -17,20 +20,30 @@ def filter(label: str):
         return 0
 
 
+# %%
+
+
 class IMDBDataset(Dataset):
     tokenizer_path = "../models/tokenizer"
 
-    def __init__(self, input_df: pd.DataFrame) -> None:
+    def __init__(self, input_dataframe: pd.DataFrame) -> None:
         super().__init__()
-        self.input_df = clean(input_df=input_df)
+        self.input_df = clean(input_df=input_dataframe)
 
     def __len__(self):
         return len(self.input_df)
 
     def __getitem__(self, index):
-        item = self.input_df.loc[index]
+        item = self.input_df.iloc[index]
         return (item.review, item.label)
 
 
 if __name__ == "__main__":
     pass
+
+# %%
+
+
+from model import ClassificationModel
+
+# %%
