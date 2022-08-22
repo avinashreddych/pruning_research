@@ -31,7 +31,7 @@ class ClassificationModel(nn.Module):
 
     def forward(self, x):
         tokens = self.tokenizer(x, max_length = 512, padding = "max_length", truncation = True, return_tensors="pt")
-        # with torch.no_grad():
+
         x = self.bert(**tokens)[1]
         x = self.linear1(x)
         x = self.relu(x)
